@@ -39,12 +39,6 @@ steps:
     ng build --prod    
   displayName: 'Build with Angular'
 
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.x'
-    addToPath: true
-    architecture: 'x64'
-  displayName: 'Use Python 3.x'
 
 - script: |
     echo Starting the build
