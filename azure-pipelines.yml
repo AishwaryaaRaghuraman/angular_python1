@@ -25,7 +25,7 @@ steps:
     REPO_NAME: $(repoName)
     BRANCH_NAME: $(branchName)
   continueOnError: false
-
+ 
 - task: NodeTool@0
   inputs:
     versionSpec: '16.x'
@@ -39,7 +39,13 @@ steps:
     ng build --prod    
   displayName: 'Build with Angular'
 
-      
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+    architecture: 'x64'
+  displayName: 'Use Python 3.x'
+
 - script: |
     echo Starting the build
     cd backend/
@@ -49,23 +55,35 @@ steps:
     pip install -r requirements.txt
   displayName: 'Build with Python'
 
+
 - script: |
     echo "Running SonarQube Scan"
     sonar-scanner.bat -D"sonar.projectKey=$(projectkey)" -D"sonar.sources=." -D"sonar.host.url=$(SONAR_URL)" -D"sonar.token=$(SONAR_TOKEN)" 
     displayName: 'Run SonarQube Scanning'
 
+- script: |
+    # Your deployment script to start the Python backend server here
+    cd backend/
+    python manage.py recreate_db
+    python manage.py runserver
+  displayName: 'Start Python Backend Server'
 
-- task: ArchiveFiles@2
-  displayName: 'Archive files'
-  inputs:
-          rootFolderOrFile: '$(System.DefaultWorkingDirectory)/'
-          includeRootFolder: false
-          archiveType: zip
-          archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-          replaceExistingArchive: true
+# - task: ArchiveFiles@2
+#   displayName: 'Archive files'
+#   inputs:
+#           rootFolderOrFile: '$(System.DefaultWorkingDirectory)/'
+#           includeRootFolder: false
+#           archiveType: zip
+#           archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+#           replaceExistingArchive: true
 
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+#     ArtifactName: 'drop'
+#     publishLocation: 'Container'
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-    ArtifactName: 'drop'
+    pathtoPublish: '$(System.DefaultWorkingDirectory)/dist'
+    artifactName: 'angular-app'
     publishLocation: 'Container'
